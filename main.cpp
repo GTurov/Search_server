@@ -652,20 +652,25 @@ void TestRelevanceCheck() {
     }
     {
         const auto found_docs = server.FindTopDocuments("black raptor cat"s);
-        ASSERT_HINT((abs(found_docs[0].relevance - 0.402359) < EPSILON), "Incorrect relevance computing"s);
-        ASSERT_HINT((abs(found_docs[1].relevance - 0.22992) < EPSILON), "Incorrect relevance computing"s);
+        //                                         |   black         |   | raptor   |   |    cat       |
+        ASSERT_HINT((abs(found_docs[0].relevance - (log(5.0/1) * 1.0/4 + log(5.0/1)*0 + log(5.0/5)*1.0/4)) < EPSILON), "Incorrect relevance computing"s); //id 33
+        //                                         |   black     |   |  raptor      |   |    cat       |
+        ASSERT_HINT((abs(found_docs[1].relevance - (log(5.0/1) * 0 + log(5.0/1)*1.0/7 + log(5.0/5)*1.0/7)) < EPSILON), "Incorrect relevance computing"s); //id 55
         ASSERT_EQUAL_HINT(count_if(found_docs.begin(),found_docs.end(),[](const Document& d){return d.relevance == 0;}), 3, "Toomany documents with zero relevance"s);
     }
     {
-      const auto found_docs = server.FindTopDocuments("black cat in the dark room"s);
-      ASSERT_HINT((abs(found_docs[0].relevance - 1.20708) < 2*EPSILON),"Incorrect relevance computing"s);
-      ASSERT_EQUAL_HINT(count_if(found_docs.begin(),found_docs.end(),[](const Document& d){return d.relevance == 0;}), 4, "Toomany documents with zero relevance"s);
+        const auto found_docs = server.FindTopDocuments("black cat in the dark room"s); //id 33
+        //                                          |   black        |   |     cat      |   |   dark         |   |    room        |
+        ASSERT_HINT((abs(found_docs[0].relevance - (log(5.0/1) * 1.0/4 + log(5.0/5) * 1/4 + log(5.0/1) * 1.0/4 + log(5.0/1) * 1.0/4)) < EPSILON),"Incorrect relevance computing"s);
+        ASSERT_EQUAL_HINT(count_if(found_docs.begin(),found_docs.end(),[](const Document& d){return d.relevance == 0;}), 4, "Toomany documents with zero relevance"s);
     }
     {
         const auto found_docs = server.FindTopDocuments("orange cat city"s);
-        ASSERT_HINT((abs(found_docs[0].relevance - 0.631432) < EPSILON),"Incorrect relevance computing"s);
-        ASSERT_HINT((abs(found_docs[1].relevance - 0.130899) < EPSILON),"Incorrect relevance computing"s);
-        ASSERT_EQUAL_HINT(count_if(found_docs.begin(),found_docs.end(),[](const Document& d){return d.relevance == 0;}), 3, "Toomany documents with zero relevance"s);
+        //                                          |   orange       |   |   cat        |   |      city      |
+        ASSERT_HINT((abs(found_docs[0].relevance - (log(5.0/2) * 1.0/4 + log(5/5) * 1.0/4 + log(5.0/1) * 1.0/4)) < EPSILON),"Incorrect relevance computing"s); //id 11
+        //                                          |   orange       |   |   cat        |   |      city    |
+        ASSERT_HINT((abs(found_docs[1].relevance - (log(5.0/2) * 1.0/7 + log(5.0/5) * 1.0/7 + log(5.0/1) * 0)) < EPSILON),"Incorrect relevance computing"s); //id 55
+        ASSERT_EQUAL_HINT(count_if(found_docs.begin(),found_docs.end(),[](const Document& d){return d.relevance == 0;}), 3, "Too many documents with zero relevance"s);
     }
 }
 
