@@ -117,6 +117,7 @@ ostream& operator<<(ostream& out, DocumentStatus status) {
     case DocumentStatus::IRRELEVANT: out << "DocumentStatus::IRRELEVANT"s; break;
     case DocumentStatus::BANNED: out << "DocumentStatus::BANNED"s; break;
     case DocumentStatus::REMOVED: out << "DocumentStatus::REMOVED"s; break;
+    default: out << static_cast<int>(status);
     }
     return out;
 }
@@ -150,6 +151,17 @@ vector<string> SplitIntoWords(const string& text) {
     return words;
 }
 
+int SecureSum(int sum, int x) {
+    if ( (sum < 0) && (x < 0) && (numeric_limits<int>::min() - x > sum)) {
+            return numeric_limits<int>::min();
+    }
+    else if ( (sum > 0) && (x > 0) && (numeric_limits<int>::max() - x < sum)) {
+            return numeric_limits<int>::max();
+    }
+    else
+        return sum+x;
+}
+
 struct Document {
     int id;
     double relevance;
@@ -172,7 +184,6 @@ public:
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
         for (const string& word : words) {
-            //Initialization added
             if (word_to_document_freqs_[word].count(document_id) == 0) {
                 word_to_document_freqs_[word][document_id] = 0;
             }
@@ -265,8 +276,7 @@ private:
     }
 
     static int ComputeAverageRating(const vector<int>& ratings) {
-        return (!ratings.size()?0:
-        accumulate(ratings.begin(), ratings.end(),0)/static_cast<int>(ratings.size()));
+        return (!ratings.size()?0:accumulate(ratings.begin(), ratings.end(),0, SecureSum)/static_cast<int>(ratings.size()));
     }
 
     struct QueryWord {
@@ -534,7 +544,10 @@ void TestRatingComputing() {
     server.AddDocument(2, "w2"s,  DocumentStatus::ACTUAL, {1,2,3});
     server.AddDocument(3, "w3"s,  DocumentStatus::ACTUAL, {-1,-2,-3});
     server.AddDocument(4, "w4"s,  DocumentStatus::ACTUAL, {-1,1});
-    server.AddDocument(5, "w5"s,  DocumentStatus::ACTUAL, {-1000,100});
+    server.AddDocument(5, "w5"s,  DocumentStatus::ACTUAL, {numeric_limits<int>::max(),-100, 150});
+    server.AddDocument(6, "w6"s,  DocumentStatus::ACTUAL, {numeric_limits<int>::min(),100, -150});
+    //Максим Радышевский поведал, что авторская реализация поискового сервера не обрабатывает пустые рейтинги
+    server.AddDocument(7, "w7"s,  DocumentStatus::ACTUAL, {});
     {
         const auto found_docs = server.FindTopDocuments("w1"s);
         ASSERT_EQUAL_HINT(found_docs[0].rating, 1, "Single rating computing error"s);
@@ -553,8 +566,17 @@ void TestRatingComputing() {
     }
     {
         const auto found_docs = server.FindTopDocuments("w5"s);
-        ASSERT_EQUAL_HINT(found_docs[0].rating, -450, "Large rating computing error"s);
+        ASSERT_EQUAL_HINT(found_docs[0].rating, numeric_limits<int>::max()/3, "Large rating computing error"s);
     }
+    {
+        const auto found_docs = server.FindTopDocuments("w6"s);
+        ASSERT_EQUAL_HINT(found_docs[0].rating, numeric_limits<int>::min()/3, "Large rating computing error"s);
+    }
+    {
+        const auto found_docs = server.FindTopDocuments("w7"s);
+        ASSERT_EQUAL_HINT(found_docs[0].rating, 0, "Empty rating computing error"s);
+    }
+
 }
 
 void TestPredicate() {
