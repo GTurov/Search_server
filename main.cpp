@@ -175,7 +175,7 @@ public:
     }
 
     int GetDocumentCount() const{
-        return document_statuses_.size();
+        return documents_.size();
     }
 
     int GetDocumentId(int index) const {
@@ -186,7 +186,7 @@ public:
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
         if (document_id < 0)
             throw invalid_argument("document_id < 0"s);
-        if (document_statuses_.count(document_id) > 0)
+        if (documents_.count(document_id) > 0)
             throw invalid_argument("document already exists"s);
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
@@ -196,8 +196,7 @@ public:
             }
             word_to_document_freqs_[word][document_id] += inv_word_count;
         }
-        document_ratings_.emplace(document_id, ComputeAverageRating(ratings));
-        document_statuses_.emplace(document_id, status);
+        documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
         document_ids_.push_back(document_id);
     }
 
@@ -214,7 +213,7 @@ public:
         found_documents.erase(
                 remove_if( found_documents.begin(), found_documents.end(),
                 [this, key_mapper](const Document& document){
-                    return !key_mapper(document.id, document_statuses_.at(document.id), document.rating);
+                    return !key_mapper(document.id, documents_.at(document.id).status, document.rating);
                 }
                 ),
                 found_documents.end() );
@@ -244,7 +243,7 @@ public:
                             return (document_id == p.first);
                     }
               ) != word_to_document_freqs_.at(word).end() )
-                    return make_tuple(vector<string>{},document_statuses_.at(document_id));
+                    return make_tuple(vector<string>{},documents_.at(document_id).status);
 
         }
         for (const string& word : query.plus_words) {
@@ -258,7 +257,7 @@ public:
             }
         }
         sort(MatchedWords.begin(),MatchedWords.end());
-        return make_tuple(MatchedWords,document_statuses_.at(document_id));
+        return make_tuple(MatchedWords,documents_.at(document_id).status);
     }
 
     bool IsStopWord(const string& word) const {
@@ -268,7 +267,7 @@ public:
     static bool IsMinusWord(const string& word) {
         if(word[0] == '-') {
             if ( (word.size() == 1) || ((word.size()>1)&&(word[1]=='-')) )
-                throw invalid_argument("invaid minus word"s);
+                throw invalid_argument("Invaid minus word"s);
             return true;
         }
         return false;
@@ -280,11 +279,30 @@ public:
         });
     }
 
+    static bool CheckWord(const string& word) {
+        return (IsValidWord(word)?1: throw invalid_argument("Special symbol detected"s));
+    }
+
 private:
+    struct QueryWord {
+        string data;
+        bool is_minus;
+        bool is_stop;
+    };
+
+    struct Query {
+        set<string> plus_words;
+        set<string> minus_words;
+    };
+
+    struct DocumentData {
+        int rating;
+        DocumentStatus status;
+    };
+
+    map<int, DocumentData> documents_;
     set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
-    map<int, int> document_ratings_;
-    map<int, DocumentStatus> document_statuses_;
     vector<int> document_ids_;
 
 
@@ -299,20 +317,16 @@ private:
         string word;
         for (const char c : text) {
             if (c == ' ') {
-                if(IsValidWord(word))
+                if(CheckWord(word))
                     words.push_back(word);
-                else
-                    throw invalid_argument("Special symbols detected"s);
                 word = "";
             } else {
                 word += c;
             }
         }
         if(!word.empty()) {
-            if(IsValidWord(word))
+            if(CheckWord(word))
                 words.push_back(word);
-            else
-                throw invalid_argument("Special symbols detected"s);
         }
         return words;
     }
@@ -332,10 +346,8 @@ private:
         set<string> non_empty_strings;
         for (const string& str : strings) {
             if (!str.empty() ) {
-                if (IsValidWord(str))
+                if (CheckWord(str))
                     non_empty_strings.insert(str);
-                else
-                    throw invalid_argument("Special symbols detected"s);
             }
         }
         return non_empty_strings;
@@ -345,11 +357,6 @@ private:
         return (!ratings.size()?0:accumulate(ratings.begin(), ratings.end(),0, SecureSum)/static_cast<int>(ratings.size()));
     }
 
-    struct QueryWord {
-        string data;
-        bool is_minus;
-        bool is_stop;
-    };
 
     QueryWord ParseQueryWord(string text) const {
         bool is_minus = IsMinusWord(text);
@@ -359,11 +366,6 @@ private:
             IsStopWord(text)
         };
     }
-
-    struct Query {
-        set<string> plus_words;
-        set<string> minus_words;
-    };
 
     Query ParseQuery(const string& text) const {
         Query query;
@@ -381,7 +383,7 @@ private:
     }
 
     double ComputeWordInverseDocumentFreq(const string& word) const {
-        return log(document_ratings_.size() * 1.0 / word_to_document_freqs_.at(word).size());
+        return log(documents_.size() * 1.0 / word_to_document_freqs_.at(word).size());
     }
 
     vector<Document> FindAllDocuments(const Query& query) const {
@@ -410,7 +412,7 @@ private:
                 matched_documents.push_back({
                     document_id,
                     relevance,
-                    document_ratings_.at(document_id)
+                    documents_.at(document_id).rating
                 });
         }
         return matched_documents;
@@ -776,15 +778,15 @@ void TestAddDocument() {
     server.AddDocument(4, "большой пёс скворец евгений"s, DocumentStatus::ACTUAL, {1, 1, 1});
     try {
         server.AddDocument(1, "пушистый пёс и модный ошейник"s, DocumentStatus::ACTUAL, {1, 2});
-        ASSERT_HINT(false, "Duplicate document fail");
+        ASSERT_HINT(false, "Adding duplicate document fail");
     } catch (const exception& e) {}
     try {
         server.AddDocument(-1, "пушистый пёс и модный ошейник"s, DocumentStatus::ACTUAL, {1, 2});
-        ASSERT_HINT(false, "Id <0 document fail");
+        ASSERT_HINT(false, "Adding document with Id <0 fail");
     } catch (const exception& e) {}
     try {
         server.AddDocument(3, "большой пёс скво\x12рец евгений"s, DocumentStatus::ACTUAL, {1, 3, 2});
-        ASSERT_HINT(false, "Special symbol document fail");
+        ASSERT_HINT(false, "Adding document with special symbol fail");
     } catch (const exception& e) {}
 }
 
@@ -794,27 +796,27 @@ void TestMatchAndFindDocument() {
     server.AddDocument(4, "большой пёс скворец евгений"s, DocumentStatus::ACTUAL, {1, 1, 1});
     try {
         server.FindTopDocuments("пушистый --кот"s);
-        ASSERT_HINT(false, "-- search fail");
+        ASSERT_HINT(false, "Double - search fail");
     } catch (const exception& e) {}
     try {
         server.FindTopDocuments("пушистый -"s);
-        ASSERT_HINT(false, " single - search fail");
+        ASSERT_HINT(false, "Single - search fail");
     } catch (const exception& e) {}
     try {
         server.FindTopDocuments("пушистый скво\x12рец"s);
-        ASSERT_HINT(false, "special symbol search fail");
+        ASSERT_HINT(false, "Special symbol search fail");
     } catch (const exception& e) {}
     try {
         server.MatchDocument("модный --пёс"s,0);
-        ASSERT_HINT(false, "-- match fail");
+        ASSERT_HINT(false, "Double - match fail");
     } catch (const exception& e) {}
     try {
         server.MatchDocument("пушистый - хвост"s,0);
-        ASSERT_HINT(false, " single - match fail");
+        ASSERT_HINT(false, "Single - match fail");
     } catch (const exception& e) {}
     try {
         server.MatchDocument("пушистый скво\x12рец"s,0);
-        ASSERT_HINT(false, "special symbol match fail");
+        ASSERT_HINT(false, "Special symbol match fail");
     } catch (const exception& e) {}
 }
 
@@ -876,9 +878,7 @@ void MatchDocuments(const SearchServer& search_server, const string& query) {
     try {
         cout << "Document matching for query: "s << query << endl;
         const int document_count = search_server.GetDocumentCount();
-        //cout<<"Document count: "s<<document_count<<endl;
         for (int index = 0; index < document_count; ++index) {
-            //cout<<"Index: "s<<index<<endl;
             const int document_id = search_server.GetDocumentId(index);
             const auto [words, status] = search_server.MatchDocument(query, document_id);
             PrintMatchDocumentResult(document_id, words, status);
