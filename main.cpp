@@ -26,7 +26,7 @@ template <typename Container>
 void Print(ostream& out, const Container& container){
     bool first = true;
     for (const auto& element : container) {
-        if(!first)
+        if (!first)
         out << ", "s ;
         out << element ;
         first = false;
@@ -44,17 +44,17 @@ ostream& operator<<(ostream& out, const vector<Element>& container) {
 
 template < typename Element>
 ostream& operator<<(ostream& out, const set<Element>& container) {
-    out<< "{"s;
+    out << "{"s;
     Print(out, container);
-    out<< "}"s;
+    out << "}"s;
     return out;
 }
 
 template < typename Key, typename Value>
 ostream& operator<<(ostream& out, const map<Key, Value>& container) {
-    out<< "{"s;
+    out << "{"s;
     Print(out, container);
-    out<< "}"s;
+    out << "}"s;
     return out;
 }
 
@@ -80,7 +80,7 @@ void AssertEqualImpl(const T& t, const U& u, const string& t_str, const string& 
 
 void AssertImpl(bool value, const string& expr_str, const string& file, const string& func, unsigned line,
                 const string& hint) {
-    if ( !value ) {
+    if (!value) {
         cout << file << "("s << line << "): "s << func << ": "s;
         cout << "ASSERT("s << expr_str << ") failed."s;
         if ( !hint.empty() ) {
@@ -238,7 +238,7 @@ public:
         for (const string& word : query.minus_words) {
             if (word_to_document_freqs_.count(word) == 0)
                 continue;
-            if( find_if(word_to_document_freqs_.at(word).begin(), word_to_document_freqs_.at(word).end(),
+            if ( find_if(word_to_document_freqs_.at(word).begin(), word_to_document_freqs_.at(word).end(),
                     [document_id](const pair<int, double>& p){
                             return (document_id == p.first);
                     }
@@ -265,7 +265,7 @@ public:
     }
 
     static bool IsMinusWord(const string& word) {
-        if(word[0] == '-') {
+        if (word[0] == '-') {
             if ( (word.size() == 1) || ((word.size()>1)&&(word[1]=='-')) )
                 throw invalid_argument("Invaid minus word"s);
             return true;
@@ -317,14 +317,14 @@ private:
         string word;
         for (const char c : text) {
             if (c == ' ') {
-                if(CheckWord(word))
+                if (CheckWord(word))
                     words.push_back(word);
                 word = "";
             } else {
                 word += c;
             }
         }
-        if(!word.empty()) {
+        if (!word.empty()) {
             if(CheckWord(word))
                 words.push_back(word);
         }
