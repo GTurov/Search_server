@@ -5,7 +5,7 @@
 
 #include "search_server.h"
 
-//using std::literals::operator""s;
+using std::literals::operator""s;
 
 template < typename T1, typename T2>
 std::ostream& operator<<(std::ostream& out, const std::pair<T1, T2>& element) {
@@ -110,18 +110,4 @@ void TestMatchAndFindDocument();
 
 void TestCheckIds();
 
-//void TestSearchServer() {
-//    RUN_TEST(TestFindWordsFromAddedDocument);
-//    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
-//    RUN_TEST(TestExcludeMinusWordsDocumentContent);
-//    RUN_TEST(TestMatchingDocuments);
-//    RUN_TEST(TestRelevanceSorting);
-//    RUN_TEST(TestRatingComputing);
-//    RUN_TEST(TestPredicate);
-//    RUN_TEST(TestStatusFilter);
-//    RUN_TEST(TestRelevanceCheck);
-//    RUN_TEST(TestConstructor);
-//    RUN_TEST(TestAddDocument);
-//    RUN_TEST(TestMatchAndFindDocument);
-//    RUN_TEST(TestCheckIds);
-//}
+void TestSearchServer();

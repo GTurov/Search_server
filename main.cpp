@@ -5,24 +5,24 @@
 #include "test_example_functions.h"
 
 
-void TestSearchServer() {
-    RUN_TEST(TestFindWordsFromAddedDocument);
-    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
-    RUN_TEST(TestExcludeMinusWordsDocumentContent);
-    RUN_TEST(TestMatchingDocuments);
-    RUN_TEST(TestRelevanceSorting);
-    RUN_TEST(TestRatingComputing);
-    RUN_TEST(TestPredicate);
-    RUN_TEST(TestStatusFilter);
-    RUN_TEST(TestRelevanceCheck);
-    RUN_TEST(TestConstructor);
-    RUN_TEST(TestAddDocument);
-    RUN_TEST(TestMatchAndFindDocument);
-    RUN_TEST(TestCheckIds);
-}
+//void TestSearchServer() {
+//    RUN_TEST(TestFindWordsFromAddedDocument);
+//    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
+//    RUN_TEST(TestExcludeMinusWordsDocumentContent);
+//    RUN_TEST(TestMatchingDocuments);
+//    RUN_TEST(TestRelevanceSorting);
+//    RUN_TEST(TestRatingComputing);
+//    RUN_TEST(TestPredicate);
+//    RUN_TEST(TestStatusFilter);
+//    RUN_TEST(TestRelevanceCheck);
+//    RUN_TEST(TestConstructor);
+//    RUN_TEST(TestAddDocument);
+//    RUN_TEST(TestMatchAndFindDocument);
+//    RUN_TEST(TestCheckIds);
+//}
 
 int main() {
-    TestSearchServer();
+    //TestSearchServer();
     SearchServer search_server("и в на"s);
     RequestQueue request_queue(search_server);
 
