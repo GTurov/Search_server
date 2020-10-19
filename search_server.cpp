@@ -5,6 +5,8 @@
 #include <numeric>
 #include <cmath>
 
+#include "string_processing.h"
+
 using namespace std;
 
 int SecureSum(int sum, int x) {
@@ -85,48 +87,10 @@ bool SearchServer::IsStopWord(const string& word) const {
     return stop_words_.count(word) > 0;
 }
 
-bool SearchServer::IsMinusWord(const string& word) {
-    if (word[0] == '-') {
-        if ( (word.size() == 1) || ((word.size()>1)&&(word[1]=='-')) )
-            throw invalid_argument("Invaid minus word"s);
-        return true;
-    }
-    return false;
-}
-
-bool SearchServer::IsValidWord(const string& word) {
-    return none_of(word.begin(), word.end(), [](char c) {
-        return c >= '\0' && c < ' ';
-    });
-}
-
-bool SearchServer::CheckWord(const string& word) {
-    return (IsValidWord(word)?1: throw invalid_argument("Special symbol detected"s));
-}
-
 void SearchServer::SetStopWords(const string& text) {
     for (const string& word : SplitIntoWords(text)) {
         stop_words_.insert(word);
     }
-}
-
-vector<string> SearchServer::SplitIntoWords(const string& text) {
-    vector<string> words;
-    string word;
-    for (const char c : text) {
-        if (c == ' ') {
-            if (CheckWord(word))
-                words.push_back(word);
-            word = "";
-        } else {
-            word += c;
-        }
-    }
-    if (!word.empty()) {
-        if(CheckWord(word))
-            words.push_back(word);
-    }
-    return words;
 }
 
 vector<string> SearchServer::SplitIntoWordsNoStop(const string& text) const {

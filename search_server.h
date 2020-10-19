@@ -6,6 +6,7 @@
 #include <string>
 
 #include "document.h"
+#include "string_processing.h"
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 const double EPSILON = 1.0e-6;
@@ -52,9 +53,7 @@ public:
     }
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
     bool IsStopWord(const std::string& word) const;
-    static bool IsMinusWord(const std::string& word);
-    static bool IsValidWord(const std::string& word);
-    static bool CheckWord(const std::string& word);
+
 
 private:
     struct QueryWord {
@@ -74,7 +73,7 @@ private:
     };
 
     void SetStopWords(const std::string& text);
-    static std::vector<std::string> SplitIntoWords(const std::string& text);
+
     std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
 
     template <typename StringContainer>

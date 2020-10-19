@@ -5,7 +5,8 @@
 
 #include "search_server.h"
 
-using std::literals::operator""s;
+//using std::literals::operator""s;
+using namespace std::string_literals;
 
 template < typename T1, typename T2>
 std::ostream& operator<<(std::ostream& out, const std::pair<T1, T2>& element) {
