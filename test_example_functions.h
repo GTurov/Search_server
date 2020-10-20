@@ -111,4 +111,18 @@ void TestMatchAndFindDocument();
 
 void TestCheckIds();
 
-void TestSearchServer();
+inline void TestSearchServer() {
+    RUN_TEST(TestFindWordsFromAddedDocument);
+    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
+    RUN_TEST(TestExcludeMinusWordsDocumentContent);
+    RUN_TEST(TestMatchingDocuments);
+    RUN_TEST(TestRelevanceSorting);
+    RUN_TEST(TestRatingComputing);
+    RUN_TEST(TestPredicate);
+    RUN_TEST(TestStatusFilter);
+    RUN_TEST(TestRelevanceCheck);
+    RUN_TEST(TestConstructor);
+    RUN_TEST(TestAddDocument);
+    RUN_TEST(TestMatchAndFindDocument);
+    RUN_TEST(TestCheckIds);
+}
