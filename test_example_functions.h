@@ -18,8 +18,9 @@ template <typename Container>
 void Print(std::ostream& out, const Container& container){
     bool first = true;
     for (const auto& element : container) {
-        if (!first)
-        out << ", "s ;
+        if (!first) {
+            out << ", "s ;
+        }
         out << element ;
         first = false;
     }

@@ -63,7 +63,6 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
     const int doc_id = 42;
     const string content = "cat in the city"s;
     const vector<int> ratings = {1, 2, 3};
-
     {
         SearchServer server(""s);
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
@@ -72,7 +71,6 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
         const Document& doc0 = found_docs[0];
         ASSERT_EQUAL(doc0.id, doc_id);
     }
-
     {
         SearchServer server("in the"s);
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);

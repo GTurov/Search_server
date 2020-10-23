@@ -5,15 +5,6 @@
 
 using namespace std;
 
-bool IsMinusWord(const string& word) {
-    if (word[0] == '-') {
-        if ( (word.size() == 1) || ((word.size()>1)&&(word[1]=='-')) )
-            throw invalid_argument("Invaid minus word"s);
-        return true;
-    }
-    return false;
-}
-
 bool IsValidWord(const string& word) {
     return none_of(word.begin(), word.end(), [](char c) {
         return c >= '\0' && c < ' ';
@@ -29,16 +20,19 @@ vector<string> SplitIntoWords(const string& text) {
     string word;
     for (const char c : text) {
         if (c == ' ') {
-            if (CheckWord(word))
+            if (CheckWord(word)) {
                 words.push_back(word);
+            }
             word = "";
-        } else {
+        }
+        else {
             word += c;
         }
     }
     if (!word.empty()) {
-        if(CheckWord(word))
+        if(CheckWord(word)) {
             words.push_back(word);
+        }
     }
     return words;
 }
