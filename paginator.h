@@ -30,8 +30,8 @@ class Paginator {
 public:
     Paginator(Iterator first, Iterator last, int page_size = 5)
     {
-        auto PageStart = first;
-        for (auto i = first; i != last; ++i) {
+        Iterator PageStart = first;
+        for (Iterator i = first; i != last; ++i) {
             if ( (distance(first,i) > 0) && (distance(first,i) % page_size == 0) ) {
                 pages_.push_back(IteratorRange(PageStart,i));
                 PageStart = i;
@@ -39,10 +39,10 @@ public:
         }
         pages_.push_back(IteratorRange(PageStart,last));
     }
-    auto begin() const{
+    Iterator begin() const{
         return pages_.begin();
     }
-    auto end() const{
+    Iterator end() const{
         return pages_.end();
     }
 
