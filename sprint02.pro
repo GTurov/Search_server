@@ -13,6 +13,7 @@ SOURCES += main.cpp \
 
 HEADERS += \
     document.h \
+    log_duration.h \
     paginator.h \
     read_input_functions.h \
     request_queue.h \

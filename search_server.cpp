@@ -54,6 +54,7 @@ void SearchServer::AddDocument(int document_id, const string& document, Document
 }
 
 vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentStatus status) const{
+    LOG_DURATION_STREAM("Operation time", std::cout);
     return FindTopDocuments(raw_query, [status]([[maybe_unused]] int document_id, DocumentStatus document_status, [[maybe_unused]] int document_rating)
             { return document_status == status; });
 }

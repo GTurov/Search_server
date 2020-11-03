@@ -2,6 +2,7 @@
 
 #include "document.h"
 #include "string_processing.h"
+#include "log_duration.h"
 
 #include <vector>
 #include <set>
@@ -28,6 +29,7 @@ public:
     std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const;
     template <typename KeyMapper>
     std::vector<Document> FindTopDocuments(const std::string& raw_query, const KeyMapper& key_mapper) const {
+        LOG_DURATION_STREAM("Operation time", std::cout);
         const Query query = ParseQuery(raw_query);
         std::vector<Document> found_documents = FindAllDocuments(query);
 
