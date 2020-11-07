@@ -9,7 +9,7 @@
 
 using namespace std;
 
-const std::map<std::string, double> SearchServer::empty_word_freqs_ = std::map<std::string, double>();
+const map<string, double> SearchServer::empty_word_freqs_ = map<string, double>();
 
 int SecureSum(int sum, int x) {
     if ( (sum < 0) && (x < 0) && (numeric_limits<int>::min() - x > sum)) {
@@ -31,7 +31,7 @@ int SearchServer::GetDocumentCount() const{
     return documents_.size();
 }
 
-const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const {
+const map<string, double>& SearchServer::GetWordFrequencies(int document_id) const {
     return (documents_.count(document_id)!=0 ?documents_.at(document_id).word_to_freqs:empty_word_freqs_);
 }
 
@@ -60,11 +60,11 @@ void SearchServer::AddDocument(int document_id, const string& document, Document
 }
 
 void SearchServer::RemoveDocument(int document_id) {
-    auto document_it = find(document_ids_.begin(),document_ids_.end(),document_id);
-    if (document_it==document_ids_.end()) {
+    auto it = find(document_ids_.begin(),document_ids_.end(),document_id);
+    if (it==document_ids_.end()) {
         return;
     }
-    document_ids_.erase(document_it);
+    document_ids_.erase(it);
     for (auto [word, document_freqs] :  word_to_document_freqs_) {
         document_freqs.erase(document_id);
     }
@@ -72,7 +72,7 @@ void SearchServer::RemoveDocument(int document_id) {
 }
 
 vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentStatus status) const{
-    LOG_DURATION_STREAM("Operation time", std::cout);
+    LOG_DURATION_STREAM("Operation time", cout);
     return FindTopDocuments(raw_query, [status]([[maybe_unused]] int document_id, DocumentStatus document_status, [[maybe_unused]] int document_rating)
             { return document_status == status; });
 }
@@ -112,10 +112,10 @@ bool SearchServer::IsStopWord(const string& word) const {
     return stop_words_.count(word) > 0;
 }
 
-bool SearchServer::IsMinusWord(const std::string &word) {
+bool SearchServer::IsMinusWord(const string &word) {
         if (word[0] == '-') {
             if ( (word.size() == 1) || ((word.size()>1)&&(word[1]=='-')) ) {
-                throw std::invalid_argument(std::string("Invaid minus word"));
+                throw invalid_argument("Invaid minus word"s);
             }
             return true;
         }
@@ -137,11 +137,6 @@ vector<string> SearchServer::SplitIntoWordsNoStop(const string& text) const {
     }
     return words;
 }
-
-//bool SearchServer::IsDuplicates(const DocumentData& document1, const DocumentData& document2) {
-//    if (document1.word_to_freqs.size() != document2.word_to_freqs.size())
-//        return false;
-//}
 
 int SearchServer::ComputeAverageRating(const vector<int>& ratings) {
     return (!ratings.size()?0:accumulate(ratings.begin(), ratings.end(),0, SecureSum)/static_cast<int>(ratings.size()));
@@ -257,19 +252,18 @@ void RemoveDuplicates(SearchServer& search_server) {
     map<set<string>,int> content_to_id;
     vector<int> documents_for_remove;
     for (const int document_id : search_server) {
-        std::map<std::string, double> word_to_freq = search_server.GetWordFrequencies(document_id);
         set<string> content;
-        for ( auto wtf : word_to_freq) {
-            content.emplace(wtf.first);
+        for (const auto& [word, freq]: search_server.GetWordFrequencies(document_id)) {
+            content.emplace(word);
         }
         if (content_to_id.count(content)!=0) {
             documents_for_remove.push_back(document_id);
+            cout<<"Found duplicate document id "s<<document_id<<endl;
         } else {
-            content_to_id.emplace(pair(content,document_id));
+            content_to_id.emplace(content,document_id);
         }
     }
     for (const int id : documents_for_remove) {
-        std::cout<<"Found duplicate document id "s<<id<<std::endl;
         search_server.RemoveDocument(id);
     }
 }
