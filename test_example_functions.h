@@ -110,8 +110,6 @@ void TestAddDocument();
 
 void TestMatchAndFindDocument();
 
-void TestCheckIds();
-
 inline void TestSearchServer() {
     RUN_TEST(TestFindWordsFromAddedDocument);
     RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
@@ -125,5 +123,4 @@ inline void TestSearchServer() {
     RUN_TEST(TestConstructor);
     RUN_TEST(TestAddDocument);
     RUN_TEST(TestMatchAndFindDocument);
-    RUN_TEST(TestCheckIds);
 }

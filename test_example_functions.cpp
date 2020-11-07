@@ -395,20 +395,6 @@ void TestMatchAndFindDocument() {
     } catch (const exception& e) {}
 }
 
-void TestCheckIds() {
-    SearchServer server("and or from"s);
-    server.AddDocument(1, "пушистый кот пушистый хвост"s, DocumentStatus::ACTUAL, {7, 2, 7});
-    server.AddDocument(4, "большой пёс скворец евгений"s, DocumentStatus::ACTUAL, {1, 1, 1});
-    try {
-        [[maybe_unused]]const int document_id = server.GetDocumentId(-1);
-        ASSERT_HINT(false, "Id <0 get id fail");
-    } catch (const exception& e) {}
-    try {
-        const int document_count = server.GetDocumentCount();
-        [[maybe_unused]]const int document_id = server.GetDocumentId(document_count);
-        ASSERT_HINT(false, "Id > count get id fail");
-    } catch (const exception& e) {}
-}
 
 
 

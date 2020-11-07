@@ -24,8 +24,11 @@ public:
     explicit SearchServer(const std::string& stop_words_text);
 
     int GetDocumentCount() const;
-    int GetDocumentId(int index) const;
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+    auto begin() const { return document_ids_.begin(); }
+    auto end() const { return document_ids_.end(); }
     void AddDocument(int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings);
+    void RemoveDocument(int document_id);
     std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const;
     template <typename KeyMapper>
     std::vector<Document> FindTopDocuments(const std::string& raw_query, const KeyMapper& key_mapper) const {
@@ -72,6 +75,7 @@ private:
     struct DocumentData {
         int rating;
         DocumentStatus status;
+        std::map<std::string, double> word_to_freqs;
     };
 private:
     void SetStopWords(const std::string& text);
@@ -88,6 +92,7 @@ private:
         }
         return non_empty_strings;
     }
+    //static bool IsDuplicates(const DocumentData& document1, const DocumentData& document2);
     static int ComputeAverageRating(const std::vector<int>& ratings);
     QueryWord ParseQueryWord(std::string text) const;
     Query ParseQuery(const std::string& text) const ;
@@ -95,13 +100,15 @@ private:
     std::vector<Document> FindAllDocuments(const Query& query) const;
 private:
     std::map<int, DocumentData> documents_;
+    std::vector<int> document_ids_;
     std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
-    std::vector<int> document_ids_;
+    static const std::map<std::string, double> empty_word_freqs_;
 };
 
 void PrintMatchDocumentResult(int document_id, const std::vector<std::string>& words, DocumentStatus status) ;
 void AddDocument(SearchServer& search_server, int document_id, const std::string& document, DocumentStatus status,
                  const std::vector<int>& ratings) ;
 void FindTopDocuments(const SearchServer& search_server, const std::string& raw_query);
-void MatchDocuments(const SearchServer& search_server, const std::string& query) ;
+void MatchDocuments(const SearchServer& search_server, const std::string& query);
+void RemoveDuplicates(SearchServer& search_server);
