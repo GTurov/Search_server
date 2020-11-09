@@ -247,9 +247,8 @@ void MatchDocuments(const SearchServer& search_server, const string& query)
     }
 }
 
-
 void RemoveDuplicates(SearchServer& search_server) {
-    map<set<string>,int> content_to_id;
+    set<set<string>> content_to_id;
     vector<int> documents_for_remove;
     for (const int document_id : search_server) {
         set<string> content;
@@ -260,7 +259,7 @@ void RemoveDuplicates(SearchServer& search_server) {
             documents_for_remove.push_back(document_id);
             cout<<"Found duplicate document id "s<<document_id<<endl;
         } else {
-            content_to_id.emplace(content,document_id);
+            content_to_id.emplace(content);
         }
     }
     for (const int id : documents_for_remove) {
