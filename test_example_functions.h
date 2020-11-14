@@ -110,6 +110,12 @@ void TestAddDocument();
 
 void TestMatchAndFindDocument();
 
+void TestRemoveDuplicates();
+
+void TestPaginate();
+
+void TestQueue();
+
 inline void TestSearchServer() {
     RUN_TEST(TestFindWordsFromAddedDocument);
     RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
@@ -123,4 +129,7 @@ inline void TestSearchServer() {
     RUN_TEST(TestConstructor);
     RUN_TEST(TestAddDocument);
     RUN_TEST(TestMatchAndFindDocument);
+    RUN_TEST(TestRemoveDuplicates);
+    RUN_TEST(TestPaginate);
+    RUN_TEST(TestQueue);
 }

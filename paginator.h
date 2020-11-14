@@ -28,6 +28,7 @@ std::ostream& operator<<(std::ostream& out, const IteratorRange<T>& range) {
 template <typename Iterator>
 class Paginator {
 public:
+    using PagesIterator = typename std::vector<IteratorRange<Iterator>>::const_iterator;
     Paginator(Iterator first, Iterator last, int page_size = 5)
     {
         Iterator PageStart = first;
@@ -39,11 +40,10 @@ public:
         }
         pages_.push_back(IteratorRange(PageStart,last));
     }
-    auto begin() const{
-        //std::vector<IteratorRange<Iterator>>::iterator
+    PagesIterator begin() const{
         return pages_.begin();
     }
-    auto end() const{
+    PagesIterator end() const{
         return pages_.end();
     }
 
@@ -52,7 +52,9 @@ private:
 };
 
 template <typename Container>
-auto Paginate(const Container& c, size_t page_size) {
-    //Container::iterator
+using Iterator = typename Container::const_iterator;
+
+template <typename Container>
+Paginator<Iterator<Container>> Paginate(const Container& c, size_t page_size) {
     return Paginator(begin(c), end(c), page_size);
 }

@@ -1,5 +1,6 @@
 #include "search_server.h"
 #include "string_processing.h"
+#include "test_example_functions.h"
 
 #include <iostream>
 #include <algorithm>
@@ -65,14 +66,23 @@ void SearchServer::RemoveDocument(int document_id) {
         return;
     }
     document_ids_.erase(it);
-    for (auto [word, document_freqs] :  word_to_document_freqs_) {
+    vector<string> words_for_remove;
+    for (auto& [word, document_freqs] :  word_to_document_freqs_) {
         document_freqs.erase(document_id);
+        if (document_freqs.size()==0) {
+            words_for_remove.push_back(word);
+        }
+    }
+    for (const string& word: words_for_remove) {
+        word_to_document_freqs_.erase(word);
     }
     documents_.erase(document_id);
 }
 
 vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentStatus status) const{
+#ifdef SHOW_OPERATION_TIME
     LOG_DURATION_STREAM("Operation time", cout);
+#endif
     return FindTopDocuments(raw_query, [status]([[maybe_unused]] int document_id, DocumentStatus document_status, [[maybe_unused]] int document_rating)
             { return document_status == status; });
 }
@@ -191,7 +201,6 @@ vector<Document> SearchServer::FindAllDocuments(const Query& query) const {
             document_to_relevance.erase(document_id);
         }
     }
-
     vector<Document> matched_documents;
     for (const auto [document_id, relevance] : document_to_relevance) {
             matched_documents.push_back({
@@ -248,21 +257,21 @@ void MatchDocuments(const SearchServer& search_server, const string& query)
 }
 
 void RemoveDuplicates(SearchServer& search_server) {
-    set<set<string>> content_to_id;
-    vector<int> documents_for_remove;
+    set<set<string>> originals_content;
+    vector<int> duplicates_ids;
     for (const int document_id : search_server) {
         set<string> content;
         for (const auto& [word, freq]: search_server.GetWordFrequencies(document_id)) {
             content.emplace(word);
         }
-        if (content_to_id.count(content)!=0) {
-            documents_for_remove.push_back(document_id);
+        if (originals_content.count(content)!=0) {
+            duplicates_ids.push_back(document_id);
             cout<<"Found duplicate document id "s<<document_id<<endl;
         } else {
-            content_to_id.emplace(content);
+            originals_content.emplace(content);
         }
     }
-    for (const int id : documents_for_remove) {
+    for (const int id : duplicates_ids) {
         search_server.RemoveDocument(id);
     }
 }
