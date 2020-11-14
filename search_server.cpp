@@ -1,6 +1,5 @@
 #include "search_server.h"
 #include "string_processing.h"
-#include "test_example_functions.h"
 
 #include <iostream>
 #include <algorithm>
