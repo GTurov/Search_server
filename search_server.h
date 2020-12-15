@@ -4,11 +4,11 @@
 #include "string_processing.h"
 #include "log_duration.h"
 
-#include <vector>
-#include <set>
 #include <map>
-#include <string>
+#include <set>
+#include <vector>
 #include <stdexcept>
+#include <string>
 
 //#define SHOW_OPERATION_TIME
 
@@ -31,6 +31,25 @@ public:
     auto end() const { return document_ids_.end(); }
     void AddDocument(int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings);
     void RemoveDocument(int document_id);
+    template <typename ExecutionPolicy>
+    void RemoveDocument(ExecutionPolicy&& policy, int document_id) {
+        auto it = find(policy, document_ids_.begin(),document_ids_.end(),document_id);
+        if (it==document_ids_.end()) {
+            return;
+        }
+        document_ids_.erase(it);
+        std::vector<std::string> words_for_remove;
+        for (auto& [word, document_freqs] :  word_to_document_freqs_) {
+            document_freqs.erase(document_id);
+            if (document_freqs.size()==0) {
+                words_for_remove.push_back(word);
+            }
+        }
+        for (const std::string& word: words_for_remove) {
+            word_to_document_freqs_.erase(word);
+        }
+        documents_.erase(document_id);
+    }
     std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const;
     template <typename KeyMapper>
     std::vector<Document> FindTopDocuments(const std::string& raw_query, const KeyMapper& key_mapper) const {
@@ -63,6 +82,36 @@ public:
         return found_documents;
     }
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
+    template <typename ExecutionPolicy>
+    std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(ExecutionPolicy&& policy, const std::string& raw_query, int document_id) const {
+        const Query query = ParseQuery(raw_query);
+        std::vector<std::string> MatchedWords;
+        for (const std::string& word : query.minus_words) {
+            if (word_to_document_freqs_.count(word) == 0) {
+                continue;
+            }
+            if ( find_if(policy, word_to_document_freqs_.at(word).begin(), word_to_document_freqs_.at(word).end(),
+                    [document_id](const std::pair<int, double>& p){
+                            return (document_id == p.first);
+                    }
+              ) != word_to_document_freqs_.at(word).end() ) {
+                    return make_tuple(std::vector<std::string>{},documents_.at(document_id).status);
+            }
+
+        }
+        for (const std::string& word : query.plus_words) {
+            if (word_to_document_freqs_.count(word) == 0) {
+                continue;
+            }
+            for (const auto [id, term_freq] : word_to_document_freqs_.at(word)) {
+                if ( (id == document_id) && (count(policy, MatchedWords.begin(),MatchedWords.end(),word) == 0) ){
+                    MatchedWords.push_back(word);
+                }
+            }
+        }
+        sort(policy, MatchedWords.begin(),MatchedWords.end());
+        return make_tuple(MatchedWords,documents_.at(document_id).status);
+    }
     bool IsStopWord(const std::string& word) const;
     static bool IsMinusWord(const std::string& word);
 private:
@@ -97,7 +146,7 @@ private:
     }
     static int ComputeAverageRating(const std::vector<int>& ratings);
     QueryWord ParseQueryWord(std::string text) const;
-    Query ParseQuery(const std::string& text) const ;
+    Query ParseQuery(const std::string &text) const ;
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
     std::vector<Document> FindAllDocuments(const Query& query) const;
 private:
@@ -114,3 +163,8 @@ void AddDocument(SearchServer& search_server, int document_id, const std::string
 void FindTopDocuments(const SearchServer& search_server, const std::string& raw_query);
 void MatchDocuments(const SearchServer& search_server, const std::string& query);
 void RemoveDuplicates(SearchServer& search_server);
+std::vector<std::vector<Document>> ProcessQueries(
+    const SearchServer& search_server,
+    const std::vector<std::string>& queries);
+std::vector<Document> ProcessQueriesJoined(const SearchServer& search_server,
+        const std::vector<std::string>& queries);

@@ -1,8 +1,9 @@
 #include "search_server.h"
 #include "string_processing.h"
 
-#include <iostream>
 #include <algorithm>
+#include <execution>
+#include <iostream>
 #include <numeric>
 #include <cmath>
 
@@ -35,7 +36,7 @@ const map<string, double>& SearchServer::GetWordFrequencies(int document_id) con
     return (documents_.count(document_id)!=0 ?documents_.at(document_id).word_to_freqs:empty_word_freqs_);
 }
 
-void SearchServer::AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
+void SearchServer::AddDocument(int document_id, const std::string &document, DocumentStatus status, const vector<int>& ratings) {
     if (document_id < 0) {
         throw invalid_argument("document_id < 0"s);
     }
@@ -273,6 +274,25 @@ void RemoveDuplicates(SearchServer& search_server) {
     for (const int id : duplicates_ids) {
         search_server.RemoveDocument(id);
     }
+}
+
+std::vector<std::vector<Document>> ProcessQueries(const SearchServer& search_server,
+                                                  const std::vector<std::string>& queries) {
+    std::vector<std::vector<Document>> result(queries.size());
+    std::transform(std::execution::par, queries.begin(), queries.end(),result.begin(),[&](std::string query)
+    {return search_server.FindTopDocuments(query);});
+    return result;
+}
+
+std::vector<Document> ProcessQueriesJoined(const SearchServer& search_server,
+                                         const std::vector<std::string>& queries) {
+    std::vector<Document> result;
+    for (const auto& documents: ProcessQueries(search_server, queries) ) {
+        for (const Document& document : documents) {
+            result.push_back(document);
+        }
+    }
+    return result;
 }
 
 

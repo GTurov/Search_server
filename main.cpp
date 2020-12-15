@@ -1,9 +1,8 @@
 #include "search_server.h"
-#include "request_queue.h"
 #include "test_example_functions.h"
-#include "paginator.h"
 
 #include <iostream>
+#include <execution>
 
 using namespace std;
 
@@ -11,33 +10,72 @@ int main() {
     TestSearchServer();
     SearchServer search_server("and with"s);
 
-    AddDocument(search_server, 1, "funny pet and nasty rat"s, DocumentStatus::ACTUAL, {7, 2, 7});
-    AddDocument(search_server, 2, "funny pet with curly hair"s, DocumentStatus::ACTUAL, {1, 2});
+    search_server.AddDocument(0, "funny pet and nasty rat"s, DocumentStatus::ACTUAL, {1, 2});
+    search_server.AddDocument(1, "funny pet with curly hair"s, DocumentStatus::ACTUAL, {1, 2});
+    search_server.AddDocument(2, "funny pet and not very nasty rat"s, DocumentStatus::ACTUAL, {1, 2});
+    search_server.AddDocument(3, "pet with rat and rat and rat"s, DocumentStatus::ACTUAL, {1, 2});
+    search_server.AddDocument(4, "nasty rat with curly hair"s, DocumentStatus::ACTUAL, {1, 2});
 
-    // дубликат документа 2, будет удалён
-    AddDocument(search_server, 3, "funny pet with curly hair"s, DocumentStatus::ACTUAL, {1, 2});
 
-    // отличие только в стоп-словах, считаем дубликатом
-    AddDocument(search_server, 4, "funny pet and curly hair"s, DocumentStatus::ACTUAL, {1, 2});
+    const vector<string> queries = {
+        "nasty rat -not"s,
+        "not very funny nasty pet"s,
+        "curly hair"s
+    };
+//    int id = 0;
+//    for (
+//        const auto& documents : ProcessQueries(search_server, queries)
+//    ) {
+//        cout << documents.size() << " documents for query ["s << queries[id++] << "]"s << endl;
+//    }
 
-    // множество слов такое же, считаем дубликатом документа 1
-    AddDocument(search_server, 5, "funny funny pet and nasty nasty rat"s, DocumentStatus::ACTUAL, {1, 2});
+//    for (const Document& document : ProcessQueriesJoined(search_server, queries)) {
+//           cout << "Document "s << document.id << " matched with relevance "s << document.relevance << endl;
+//       }
 
-    // добавились новые слова, дубликатом не является
-    AddDocument(search_server, 6, "funny pet and not very nasty rat"s, DocumentStatus::ACTUAL, {1, 2});
 
-    // множество слов такое же, как в id 6, несмотря на другой порядок, считаем дубликатом
-    AddDocument(search_server, 7, "very nasty rat and not very funny pet"s, DocumentStatus::ACTUAL, {1, 2});
+//    const string query = "curly and funny"s;
 
-    // есть не все слова, не является дубликатом
-    AddDocument(search_server, 8, "pet with rat and rat and rat"s, DocumentStatus::ACTUAL, {1, 2});
+//    auto report = [&search_server, &query] {
+//        cout << search_server.GetDocumentCount() << " documents total, "s
+//             << search_server.FindTopDocuments(query).size() << " documents for query ["s << query << "]"s << endl;
+//    };
 
-    // слова из разных документов, не является дубликатом
-    AddDocument(search_server, 9, "nasty rat with curly hair"s, DocumentStatus::ACTUAL, {1, 2});
+//    report();
+//    // однопоточная версия
+//    search_server.RemoveDocument(5);
+//    report();
+//    // однопоточная версия
+//    search_server.RemoveDocument(execution::seq, 1);
+//    report();
+//    // многопоточная версия
+//    search_server.RemoveDocument(execution::par, 2);
+//    report();
 
-    std::cout << "Before duplicates removed: "s << search_server.GetDocumentCount() << std::endl;
-    RemoveDuplicates(search_server);
-    std::cout << "After duplicates removed: "s << search_server.GetDocumentCount() << std::endl;
+    const string query = "curly and funny -not"s;
+
+    {
+        const auto [words, status] = search_server.MatchDocument(query, 1);
+                cout << words.size() << " words for document 1"s << endl;
+                // 1 words for document 1
+    }
+
+        {
+            const auto [words, status] = search_server.MatchDocument(execution::seq, query, 2);
+                    cout << words.size() << " words for document 2"s << endl;
+                    // 2 words for document 2
+        }
+
+            {
+                const auto [words, status] = search_server.MatchDocument(execution::par, query, 3);
+                        cout << words.size() << " words for document 3"s << endl;
+                        // 0 words for document 3
+            }
+
+
+    return 0;
+
 }
+
 
 
