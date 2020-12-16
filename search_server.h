@@ -12,9 +12,6 @@
 
 #include "test_example_functions.h"
 
-//#define SHOW_OPERATION_TIME
-#define MULTITHREAD
-
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 const double EPSILON = 1.0e-6;
 
@@ -57,9 +54,6 @@ public:
     std::vector<Document> FindTopDocuments(const std::string_view& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const;
     template <typename KeyMapper>
     std::vector<Document> FindTopDocuments(const std::string_view& raw_query, const KeyMapper& key_mapper) const {
-#ifdef SHOW_OPERATION_TIME
-        LOG_DURATION_STREAM("Operation time", std::cout);
-#endif
         const Query query = ParseQuery(raw_query);
         std::vector<Document> found_documents = FindAllDocuments(query);
         found_documents.erase(

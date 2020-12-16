@@ -47,19 +47,19 @@ vector<string_view> SplitIntoWordsView(const string_view& text) {
     for (i = 0; i < (int)text.size(); ++i) {
         //cout<<"i: "s<<word_begin<<" "s<<i<<endl;
         if (text[i] == ' ') {
-  //          cout<<"w: \""s<<text.substr(word_begin,i-word_begin)<<"\""<<endl;
             if (CheckWord(text.substr(word_begin,i-word_begin))) {
+                //cout<<"w: \""s<<text.substr(word_begin,i-word_begin)<<"\""<<endl;
                 words.push_back(text.substr(word_begin,i-word_begin));
             }
             word_begin = i+1;
         }
     }
-    if (word_begin != (int)text.size()-1) {
-        //cout<<"w: \""s<<text.substr(word_begin,text.size()-word_begin)<<"\""<<endl;
+    if (word_begin != (int)text.size()) {
         if (CheckWord(text.substr(word_begin,text.size()-word_begin))) {
+            //cout<<"w: \""s<<text.substr(word_begin,text.size()-word_begin)<<"\""<<endl;
             words.push_back(text.substr(word_begin,text.size()-word_begin));
         }
     }
-//    cout<<endl;
+    //cout<<endl;
     return words;
 }

@@ -1,6 +1,5 @@
 #include "process_queries.h"
 
-#ifdef MULTITHREAD
 
 #include <execution>
 
@@ -22,4 +21,3 @@ std::vector<Document> ProcessQueriesJoined(const SearchServer& search_server,
     }
     return result;
 }
-#endif

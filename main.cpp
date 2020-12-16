@@ -242,24 +242,57 @@ vector<string> GenerateQueries(mt19937& generator, const vector<string>& diction
 template <typename QueriesProcessor>
 void Test(string_view mark, QueriesProcessor processor, const SearchServer& search_server, const vector<string>& queries) {
     LOG_DURATION(mark);
+    cout << "Test: "<< mark << endl;
+    cout << "Query count: " << queries.size() << endl;
     const auto documents = processor(search_server, queries);
-    cout << documents.size() << endl;
+    cout << "Result count: " << documents.size() << endl;
 }
 
 #define TEST(processor) Test(#processor, processor, search_server, queries)
 
 int main() {
-        TestSearchServer();
-    mt19937 generator;
-    const auto dictionary = GenerateDictionary(generator, 10000, 25);
-    const auto documents = GenerateQueries(generator, dictionary, 100'000, 10);
+    TestSearchServer();
 
-    SearchServer search_server(dictionary[0]);
-    for (size_t i = 0; i < documents.size(); ++i) {
-        search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
+    SearchServer search_server("and with"s);
+
+    {
+        search_server.AddDocument(0, "funny pet and nasty rat"s, DocumentStatus::ACTUAL, {1, 2});
+        search_server.AddDocument(1, "funny pet with curly hair"s, DocumentStatus::ACTUAL, {1, 2});
+        search_server.AddDocument(2, "funny pet and not very nasty rat"s, DocumentStatus::ACTUAL, {1, 2});
+        search_server.AddDocument(3, "pet with rat and rat and rat"s, DocumentStatus::ACTUAL, {1, 2});
+        search_server.AddDocument(4, "nasty rat with curly hair"s, DocumentStatus::ACTUAL, {1, 2});
+        search_server.FindTopDocuments("funny -"s);
+        return 0; //!!!!!!!!!!!!!!!!!
+
+        const vector<string> queries = {
+            "nasty rat -not"s,
+            "not very funny nasty pet"s,
+            "curly hair"s
+        };
+
+        int id = 0;
+        for (const auto& documents : ProcessQueries(search_server, queries)) {
+            cout << documents.size() << " documents for query ["s << queries[id++] << "]"s << endl;
+        }
+
+        for (const Document& document : ProcessQueriesJoined(search_server, queries)) {
+            cout << "Document "s << document.id << " matched with relevance "s << document.relevance << endl;
+        }
     }
 
-    const auto queries = GenerateQueries(generator, dictionary, 10'000, 7);
-    TEST(ProcessQueries);
+    {
+        mt19937 generator;
+        const auto dictionary = GenerateDictionary(generator, 10000, 25);
+        const auto documents = GenerateQueries(generator, dictionary, 100'000, 10);
+
+        SearchServer search_server(dictionary[0]);
+        for (size_t i = 0; i < documents.size(); ++i) {
+            search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
+        }
+
+        const auto queries = GenerateQueries(generator, dictionary, 10'000, 7);
+        TEST(ProcessQueries);
+        TEST(ProcessQueriesJoined);
+    }
 }
 

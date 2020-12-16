@@ -94,9 +94,6 @@ void SearchServer::RemoveDocument(int document_id) {
 }
 
 vector<Document> SearchServer::FindTopDocuments(const string_view& raw_query, DocumentStatus status) const{
-#ifdef SHOW_OPERATION_TIME
-    LOG_DURATION_STREAM("Operation time", cout);
-#endif
     return FindTopDocuments(raw_query, [status]([[maybe_unused]] int document_id, DocumentStatus document_status, [[maybe_unused]] int document_rating)
             { return document_status == status; });
 }
@@ -179,7 +176,8 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
 
 SearchServer::Query SearchServer::ParseQuery(const string_view& text) const {
     Query query;
-    for (const string_view& word : SplitIntoWords(text)) {
+    for (const string_view& word : SplitIntoWordsView(text)) {
+        //cout<<word<<" ";
         const QueryWord query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
@@ -190,6 +188,7 @@ SearchServer::Query SearchServer::ParseQuery(const string_view& text) const {
             }
         }
     }
+    //cout<<"done"<<endl;
     return query;
 }
 
@@ -291,17 +290,3 @@ void RemoveDuplicates(SearchServer& search_server) {
         search_server.RemoveDocument(id);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
