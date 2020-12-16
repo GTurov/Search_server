@@ -10,7 +10,10 @@
 #include <stdexcept>
 #include <string>
 
+#include "test_example_functions.h"
+
 //#define SHOW_OPERATION_TIME
+#define MULTITHREAD
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 const double EPSILON = 1.0e-6;
@@ -24,12 +27,13 @@ public:
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
     }
     explicit SearchServer(const std::string& stop_words_text);
+    explicit SearchServer(const std::string_view& stop_words_text);
 
     int GetDocumentCount() const;
-    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+    const std::map<std::string_view, double> GetWordFrequencies(int document_id) const;
     auto begin() const { return document_ids_.begin(); }
     auto end() const { return document_ids_.end(); }
-    void AddDocument(int document_id, const std::string& document, DocumentStatus status, const std::vector<int>& ratings);
+    void AddDocument(int document_id, const std::string_view& document, DocumentStatus status, const std::vector<int>& ratings);
     void RemoveDocument(int document_id);
     template <typename ExecutionPolicy>
     void RemoveDocument(ExecutionPolicy&& policy, int document_id) {
@@ -50,9 +54,9 @@ public:
         }
         documents_.erase(document_id);
     }
-    std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const;
+    std::vector<Document> FindTopDocuments(const std::string_view& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const;
     template <typename KeyMapper>
-    std::vector<Document> FindTopDocuments(const std::string& raw_query, const KeyMapper& key_mapper) const {
+    std::vector<Document> FindTopDocuments(const std::string_view& raw_query, const KeyMapper& key_mapper) const {
 #ifdef SHOW_OPERATION_TIME
         LOG_DURATION_STREAM("Operation time", std::cout);
 #endif
@@ -81,11 +85,11 @@ public:
                 }
         return found_documents;
     }
-    std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query, int document_id) const;
+    std::tuple<std::vector<std::string_view>, DocumentStatus> MatchDocument(const std::string_view& raw_query, int document_id) const;
     template <typename ExecutionPolicy>
-    std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(ExecutionPolicy&& policy, const std::string& raw_query, int document_id) const {
+    std::tuple<std::vector<std::string_view>, DocumentStatus> MatchDocument(ExecutionPolicy&& policy, const std::string_view& raw_query, int document_id) const {
         const Query query = ParseQuery(raw_query);
-        std::vector<std::string> MatchedWords;
+        std::vector<std::string_view> MatchedWords;
         for (const std::string& word : query.minus_words) {
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
@@ -95,7 +99,7 @@ public:
                             return (document_id == p.first);
                     }
               ) != word_to_document_freqs_.at(word).end() ) {
-                    return make_tuple(std::vector<std::string>{},documents_.at(document_id).status);
+                    return make_tuple(std::vector<std::string_view>{},documents_.at(document_id).status);
             }
 
         }
@@ -105,15 +109,18 @@ public:
             }
             for (const auto [id, term_freq] : word_to_document_freqs_.at(word)) {
                 if ( (id == document_id) && (count(policy, MatchedWords.begin(),MatchedWords.end(),word) == 0) ){
-                    MatchedWords.push_back(word);
+                    auto it = word_to_document_freqs_.find(word);
+                    auto& item = (*it).first;
+                    MatchedWords.push_back(item);
+                    //MatchedWords.push_back(word);
                 }
             }
         }
         sort(policy, MatchedWords.begin(),MatchedWords.end());
         return make_tuple(MatchedWords,documents_.at(document_id).status);
     }
-    bool IsStopWord(const std::string& word) const;
-    static bool IsMinusWord(const std::string& word);
+    bool IsStopWord(const std::string_view &word) const;
+    static bool IsMinusWord(const std::string_view &word);
 private:
     struct QueryWord {
         std::string data;
@@ -131,7 +138,7 @@ private:
     };
 private:
     void SetStopWords(const std::string& text);
-    std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
+    std::vector<std::string_view> SplitIntoWordsNoStop(const std::string_view& text) const;
     template <typename StringContainer>
     std::set<std::string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
         std::set<std::string> non_empty_strings;
@@ -145,8 +152,8 @@ private:
         return non_empty_strings;
     }
     static int ComputeAverageRating(const std::vector<int>& ratings);
-    QueryWord ParseQueryWord(std::string text) const;
-    Query ParseQuery(const std::string &text) const ;
+    QueryWord ParseQueryWord(std::string_view text) const;
+    Query ParseQuery(const std::string_view &text) const ;
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
     std::vector<Document> FindAllDocuments(const Query& query) const;
 private:
@@ -154,17 +161,13 @@ private:
     std::vector<int> document_ids_; // Первый кандидат на удаление. Может отдавать итераторы documents_, а не на этот не совсем полезный вектор?
     std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
-    static const std::map<std::string, double> empty_word_freqs_;
+    static const std::map<std::string_view, double> empty_word_freqs_;
 };
 
-void PrintMatchDocumentResult(int document_id, const std::vector<std::string>& words, DocumentStatus status) ;
+void PrintMatchDocumentResult(int document_id, const std::vector<std::string_view>& words, DocumentStatus status) ;
 void AddDocument(SearchServer& search_server, int document_id, const std::string& document, DocumentStatus status,
                  const std::vector<int>& ratings) ;
 void FindTopDocuments(const SearchServer& search_server, const std::string& raw_query);
 void MatchDocuments(const SearchServer& search_server, const std::string& query);
 void RemoveDuplicates(SearchServer& search_server);
-std::vector<std::vector<Document>> ProcessQueries(
-    const SearchServer& search_server,
-    const std::vector<std::string>& queries);
-std::vector<Document> ProcessQueriesJoined(const SearchServer& search_server,
-        const std::vector<std::string>& queries);
+
