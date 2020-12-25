@@ -45,7 +45,6 @@ vector<string_view> SplitIntoWordsView(const string_view& text) {
     int word_begin = 0;
     int i = 0;
     for (i = 0; i < (int)text.size(); ++i) {
-        //cout<<"i: "s<<word_begin<<" "s<<i<<endl;
         if (text[i] == ' ') {
             if (CheckWord(text.substr(word_begin,i-word_begin))) {
                 //cout<<"w: \""s<<text.substr(word_begin,i-word_begin)<<"\""<<endl;
