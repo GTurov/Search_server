@@ -80,17 +80,39 @@ public:
                 }
         return found_documents;
     }
+    std::vector<Document> FindTopDocumentsPar(const std::string_view& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const;
+    template <typename KeyMapper>
+    std::vector<Document> FindTopDocumentsPar(const std::string_view& raw_query, const KeyMapper& key_mapper) const {
+        const Query query = ParseQuery(raw_query);
+        std::vector<Document> found_documents = FindAllDocuments(query);
+        found_documents.erase(
+                remove_if(std::execution::par, found_documents.begin(), found_documents.end(),
+                [this, key_mapper](const Document& document){
+                    return !key_mapper(document.id, documents_.at(document.id).status, document.rating);
+                }
+                ),
+                found_documents.end() );
+
+        sort(std::execution::par, found_documents.begin(), found_documents.end(),
+             [](const Document& lhs, const Document& rhs) {
+                 if (std::abs(lhs.relevance - rhs.relevance) < EPSILON) {
+                   return lhs.rating > rhs.rating;
+                 }
+                 else {
+                    return lhs.relevance > rhs.relevance;
+                 }
+             });
+
+        if (found_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
+            found_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+                }
+        return found_documents;
+    }
     std::vector<Document> FindTopDocuments(const std::execution::sequenced_policy&, const std::string_view& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const {
-        //fffun!!!!
-        FindTopDocuments(raw_query,status);
-        FindTopDocuments(raw_query,status);
         return FindTopDocuments(raw_query,status);
     }
     template <typename KeyMapper>
     std::vector<Document> FindTopDocuments(const std::execution::sequenced_policy&, const std::string_view& raw_query, const KeyMapper& key_mapper) const {
-        //fffun!!!!
-        FindTopDocuments(raw_query,key_mapper);
-        FindTopDocuments(raw_query,key_mapper);
         return FindTopDocuments(raw_query,key_mapper);
     }
     std::vector<Document> FindTopDocuments(const std::execution::parallel_policy&, const std::string_view& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const {
@@ -98,7 +120,7 @@ public:
     }
     template <typename KeyMapper>
     std::vector<Document> FindTopDocuments(const std::execution::parallel_policy&, const std::string_view& raw_query, const KeyMapper& key_mapper) const {
-        return FindTopDocuments(raw_query,key_mapper);
+        return FindTopDocumentsPar(raw_query,key_mapper);
     }
     std::tuple<std::vector<std::string_view>, DocumentStatus> MatchDocument(const std::string_view& raw_query, int document_id) const;
     template <typename ExecutionPolicy>
@@ -171,6 +193,7 @@ private:
     Query ParseQuery(const std::string_view &text) const ;
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
     std::vector<Document> FindAllDocuments(const Query& query) const;
+    //std::vector<Document> FindAllDocumentsPar(const Query& query) const;
 private:
     std::map<int, DocumentData> documents_;
     std::vector<int> document_ids_; // Первый кандидат на удаление. Может отдавать итераторы documents_, а не на этот не совсем полезный вектор?

@@ -2,9 +2,7 @@
 #include "string_processing.h"
 
 #include <algorithm>
-#ifdef MULTITHREAD
 #include <execution>
-#endif
 #include <iostream>
 #include <numeric>
 #include <cmath>
@@ -94,6 +92,11 @@ void SearchServer::RemoveDocument(int document_id) {
 }
 
 vector<Document> SearchServer::FindTopDocuments(const string_view& raw_query, DocumentStatus status) const{
+    return FindTopDocuments(raw_query, [status]([[maybe_unused]] int document_id, DocumentStatus document_status, [[maybe_unused]] int document_rating)
+            { return document_status == status; });
+}
+
+vector<Document> SearchServer::FindTopDocumentsPar(const string_view& raw_query, DocumentStatus status) const{
     return FindTopDocuments(raw_query, [status]([[maybe_unused]] int document_id, DocumentStatus document_status, [[maybe_unused]] int document_rating)
             { return document_status == status; });
 }
@@ -226,6 +229,37 @@ vector<Document> SearchServer::FindAllDocuments(const Query& query) const {
     }
     return matched_documents;
 }
+
+//vector<Document> SearchServer::FindAllDocumentsPar(const Query& query) const {
+//    map<int, double> document_to_relevance;
+//    for (const string& word : query.plus_words) {
+//        if (word_to_document_freqs_.count(word) == 0) {
+//            continue;
+//        }
+//        const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
+//        for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
+//            document_to_relevance[document_id] += term_freq * inverse_document_freq;
+//        }
+//    }
+
+//    for (const string& word : query.minus_words) {
+//        if (word_to_document_freqs_.count(word) == 0) {
+//            continue;
+//        }
+//        for (const auto [document_id, freq] : word_to_document_freqs_.at(word)) {
+//            document_to_relevance.erase(document_id);
+//        }
+//    }
+//    vector<Document> matched_documents;
+//    for (const auto [document_id, relevance] : document_to_relevance) {
+//            matched_documents.push_back({
+//                document_id,
+//                relevance,
+//                documents_.at(document_id).rating
+//            });
+//    }
+//    return matched_documents;
+//}
 
 void PrintMatchDocumentResult(int document_id, const vector<string_view>& words, DocumentStatus status) {
     cout << "{ "s
