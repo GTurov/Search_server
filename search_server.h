@@ -149,7 +149,6 @@ public:
                     auto it = word_to_document_freqs_.find(word);
                     auto& item = (*it).first;
                     MatchedWords.push_back(item);
-                    //MatchedWords.push_back(word);
                 }
             }
         }
@@ -193,7 +192,6 @@ private:
     Query ParseQuery(const std::string_view &text) const ;
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
     std::vector<Document> FindAllDocuments(const Query& query) const;
-    //std::vector<Document> FindAllDocumentsPar(const Query& query) const;
 private:
     std::map<int, DocumentData> documents_;
     std::vector<int> document_ids_; // Первый кандидат на удаление. Может отдавать итераторы documents_, а не на этот не совсем полезный вектор?

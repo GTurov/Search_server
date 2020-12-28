@@ -40,14 +40,12 @@ vector<string> SplitIntoWords(const string_view& text) {
 }
 
 vector<string_view> SplitIntoWordsView(const string_view& text) {
-    //cout<<"s: "s<<text<<endl;
     vector<string_view> words;
     int word_begin = 0;
     int i = 0;
     for (i = 0; i < (int)text.size(); ++i) {
         if (text[i] == ' ') {
             if (CheckWord(text.substr(word_begin,i-word_begin))) {
-                //cout<<"w: \""s<<text.substr(word_begin,i-word_begin)<<"\""<<endl;
                 words.push_back(text.substr(word_begin,i-word_begin));
             }
             word_begin = i+1;
@@ -55,10 +53,8 @@ vector<string_view> SplitIntoWordsView(const string_view& text) {
     }
     if (word_begin != (int)text.size()) {
         if (CheckWord(text.substr(word_begin,text.size()-word_begin))) {
-            //cout<<"w: \""s<<text.substr(word_begin,text.size()-word_begin)<<"\""<<endl;
             words.push_back(text.substr(word_begin,text.size()-word_begin));
         }
     }
-    //cout<<endl;
     return words;
 }

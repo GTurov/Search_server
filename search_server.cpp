@@ -45,7 +45,6 @@ const map<string_view, double> SearchServer::GetWordFrequencies(int document_id)
         result[item.first] = item.second;
     }
     return result;
-    //return ( ?documents_.at(document_id).word_to_freqs:empty_word_freqs_);
 }
 
 void SearchServer::AddDocument(int document_id, const std::string_view &document, DocumentStatus status, const vector<int>& ratings) {
@@ -180,7 +179,6 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(string_view text) const {
 SearchServer::Query SearchServer::ParseQuery(const string_view& text) const {
     Query query;
     for (const string_view& word : SplitIntoWordsView(text)) {
-        //cout<<word<<" ";
         const QueryWord query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
@@ -191,7 +189,6 @@ SearchServer::Query SearchServer::ParseQuery(const string_view& text) const {
             }
         }
     }
-    //cout<<"done"<<endl;
     return query;
 }
 
@@ -229,37 +226,6 @@ vector<Document> SearchServer::FindAllDocuments(const Query& query) const {
     }
     return matched_documents;
 }
-
-//vector<Document> SearchServer::FindAllDocumentsPar(const Query& query) const {
-//    map<int, double> document_to_relevance;
-//    for (const string& word : query.plus_words) {
-//        if (word_to_document_freqs_.count(word) == 0) {
-//            continue;
-//        }
-//        const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-//        for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
-//            document_to_relevance[document_id] += term_freq * inverse_document_freq;
-//        }
-//    }
-
-//    for (const string& word : query.minus_words) {
-//        if (word_to_document_freqs_.count(word) == 0) {
-//            continue;
-//        }
-//        for (const auto [document_id, freq] : word_to_document_freqs_.at(word)) {
-//            document_to_relevance.erase(document_id);
-//        }
-//    }
-//    vector<Document> matched_documents;
-//    for (const auto [document_id, relevance] : document_to_relevance) {
-//            matched_documents.push_back({
-//                document_id,
-//                relevance,
-//                documents_.at(document_id).rating
-//            });
-//    }
-//    return matched_documents;
-//}
 
 void PrintMatchDocumentResult(int document_id, const vector<string_view>& words, DocumentStatus status) {
     cout << "{ "s
